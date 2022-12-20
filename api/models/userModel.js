@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 const userSchema = mongoose.Schema({
   name: {
     type: String,
-    lowercase: true,
     required: [true, "can't be blank"],
     match: [/^[a-zA-Z0-9]+$/, "is invalid"],
     index: true,
@@ -17,7 +16,7 @@ const userSchema = mongoose.Schema({
   },
   password: {
     type: String,
-    min: 6,
+
     required: [true, "can't be blank"],
 
     // match: [/([A-Z]|[a-z]|[^<>()[]\/.,;:\s@"]){6,}/, "is invalid"],

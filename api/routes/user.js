@@ -9,6 +9,8 @@ const {
   GET_USER_BY_ID,
   GET_ALL_USERS_WITH_TICKETS,
   GET_USER_BY_ID_WITH_TICKETS,
+  // ---------------
+  // CHECK_USER_NAME,
 } = require("../controllers/user");
 
 router.post("/createUser", CREATE_USER);
@@ -24,5 +26,8 @@ router.get("/getUserById/:id", auth, GET_USER_BY_ID);
 router.get("/getAllUsersWithTickets", auth, GET_ALL_USERS_WITH_TICKETS);
 
 router.get("/getUserByIdWithTickets/:id", auth, GET_USER_BY_ID_WITH_TICKETS);
+
+// --------------
+// router.get("/checkUserName", CHECK_USER_NAME);
 
 module.exports = router;

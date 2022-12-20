@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const { rawListeners } = require("../models/userModel"); //neaišku kam
+// const { rawListeners } = require("../models/userModel"); //neaišku kam
 const jwt = require("jsonwebtoken");
 
 const UserSchema = require("../models/userModel");
@@ -8,10 +8,14 @@ const ObjectId = require("mongoose").Types.ObjectId;
 // CREATE USER---------------------------------
 
 module.exports.CREATE_USER = async (req, res) => {
+  if (!checkPassword(req.body.password)) {
+    return res.status(400).json({ responce: "check password" });
+  }
+
   const hashedPassword = await bcrypt.hash(req.body.password, 10); // užkoduojama slaptažodį
 
   const user = new UserSchema({
-    name: req.body.name,
+    name: checkName(req.body.name),
     email: req.body.email,
     password: hashedPassword,
     bought_tickets: [],
@@ -19,13 +23,10 @@ module.exports.CREATE_USER = async (req, res) => {
   });
 
   const userCheck = await UserSchema.findOne({ email: req.body.email });
-  console.log(userCheck);
 
   if (userCheck === null) {
-    // tikrina ar yra toks USER
-    user // jei tokio nėra tai įrašo
+    user
       .save()
-
       .then((result) => {
         const jwt_token = jwt.sign(
           {
@@ -46,7 +47,6 @@ module.exports.CREATE_USER = async (req, res) => {
           { algorythm: "RS256" }
         );
 
-        console.log(result);
         return res.status(200).json({
           response: "User was created succses",
           result,
@@ -55,13 +55,10 @@ module.exports.CREATE_USER = async (req, res) => {
         });
       })
       .catch((err) => {
-        console.log("err", err);
         res.status(400).json({ responce: "validation error" });
       });
   } else {
-    // jei toks yra gražina klaidą
-    console.log("toks vartotojas yra");
-    res.status(400).json({ responce: "user already exist" });
+    return res.status(400).json({ responce: "user already exist" });
   }
 };
 
@@ -75,8 +72,6 @@ module.exports.USER_LOGIN = async (req, res) => {
       req.body.password,
       user.password
     );
-
-    console.log(user);
 
     if (isPasswordMatch) {
       const jwt_token = jwt.sign(
@@ -106,9 +101,6 @@ module.exports.USER_LOGIN = async (req, res) => {
     }
     return res.status(404).json({ status: "login failed" });
   } catch (err) {
-    console.log("req.body", req.body);
-
-    console.log("err", err);
     return res.status(404).json({ status: "login failed" });
   }
 };
@@ -128,8 +120,6 @@ module.exports.GET_NEW_JWT_TOKEN = async (req, res) => {
         { expiresIn: "2h" },
         { algorythm: "RS256" }
       );
-      console.log(decoded.email);
-      console.log(decoded.userId);
 
       return res.status(200).json({
         status: "JWT TOKEN refreshed",
@@ -148,8 +138,6 @@ module.exports.GET_ALL_USERS = function (req, res) {
   UserSchema.find()
     .sort({ name: 1 })
     .then((results) => {
-      // console.log(results);
-
       return res.status(200).json({ totalUsers: results });
     });
 };
@@ -159,20 +147,16 @@ module.exports.GET_USER_BY_ID = async function (req, res) {
   const jwt_token = req.headers.jwt_token;
   jwt.verify(jwt_token, process.env.JWT_SECRET, (err, decoded) => {
     if (!err && req.params.id === decoded.userId) {
-      console.log(decoded.userId);
       UserSchema.findOne({ _id: req.params.id }).then((results) => {
-        // console.log(results);
-
         return res.status(200).json({ User: results });
       });
     } else {
-      console.log("auth failed");
       return res.status(404).json({ status: "auth failed" });
     }
   });
 };
 
-// /getAllUsersWithTickets--------------------------------------
+// getAllUsersWithTickets--------------------------------------
 
 module.exports.GET_ALL_USERS_WITH_TICKETS = async function (req, res) {
   const data = await UserSchema.aggregate([
@@ -186,12 +170,10 @@ module.exports.GET_ALL_USERS_WITH_TICKETS = async function (req, res) {
     },
   ]).exec();
 
-  console.log(data);
-
   return res.status(200).json({ user: data });
 };
 
-// /getUserByIdWithTickets--------------------------------------
+// getUserByIdWithTickets--------------------------------------
 
 module.exports.GET_USER_BY_ID_WITH_TICKETS = async function (req, res) {
   const data = await UserSchema.aggregate([
@@ -206,7 +188,22 @@ module.exports.GET_USER_BY_ID_WITH_TICKETS = async function (req, res) {
     { $match: { _id: ObjectId(req.params.id) } },
   ]).exec();
 
-  console.log(data);
-
   return res.status(200).json({ user: data });
+};
+
+// Functions
+// Check user name
+
+const checkName = (data) => {
+  return data.charAt(0).toUpperCase() + data.toLowerCase().slice(1);
+};
+
+// Check password
+
+const checkPassword = (data) => {
+  if (data.length < 6 || data.match(/\d+/) === null) {
+    return false;
+  } else {
+    return true;
+  }
 };
