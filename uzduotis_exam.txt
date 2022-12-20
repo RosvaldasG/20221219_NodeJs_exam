@@ -1,0 +1,80 @@
+Endpointai:
+
+
+VARTOTOJAS:
+_id
+name
+email
+password
+bought_tickets [...] // bilietų ID
+money_balance // number
+
+
+BILETAI:
+_id
+title
+ticket_price // number
+from_location // Vilnius
+to_location // Kaunas
+to_location_photo_url // miesto photo
+
+
+1. /signUp .  Vartotojo registracija.
+Validacija // visi laukai, money_balance - įrašome pinigų kiekį
+Vatotojo email privalo turėti "@"; // tikrinti, kad @ būtų
+Jei vardas parašomas iš mažosios raidės, turi būt pakeista pirmoji raidė į didžiąja;
+Slaptažodis turi turėt bent 6 simbolius ir vienas iš jų turi būt skaičius. // tikrinti
+
+Neįvykdant validacijos reikalavimų vartotojui yra gražinamas http 400 statusas su žinute, kad validacija buvo nesekminga. 
+
+Įvykdant sėkmingą registraciją vartotojui gražinamas:
+200 statusas su sėkmės žinute;
+jwt_token (galioja 2h);
+jwt_refresh_token (galioja 1d); 
+
+
+2. /login .  Vartotojo prisijungimas.
+
+Suvedant blogus vartotojo duomenis grąžinamas 404 http statusas su žinute, kad blogas emailas arba slaptažodis.
+
+Įvykdant sėkmingą registraciją vartotojui gražinamas:
+200 statusas su sėkmės žinute;
+jwt_token (galioja 2h);
+jwt_refresh_token (galioja 1d);
+
+
+3. /getNewJwtToken 
+
+Paduodamas jwt_refresh_token ir jei jis yra geras yra sukuriamas naujas jwt_token ir grąžinamas vartotojui kartu su paduotu jwt_refresh_token.
+
+Jei jwt_refresh_token nustojęs galioti arba jeigu yra bogas vartotojui gražinamas 400 http statusas su žinute, kad vartotojas turi prisijungti iš naujo.
+
+
+4. /getAllUsers  (tik prisijungusiems vartotojams)
+
+Grąžina visus vartotojus. Vartotojai išrikiuojami pagal vardą abecelės tvarka.
+
+
+5. /getUserById (tik prisijungusiems vartotojams)
+Neradus tokio vartotojo gražinamas 404 http statusas.
+
+
+6. /buyTicket (tik prisijungusiems vartotojams)
+
+paduodama:
+user_id ir ticket_id
+
+Jei vartotojui nepakanka pinigų sąskaitos balanse gražinamas 400 http statusas su informcine žinute.
+
+Sėkmingai įvykstant pirkimui:
+Prie Userio bought_tickets masyvo yra pridedamas _id(ticket);
+Iš vartotojo money_balance atimama ticket_price;
+
+
+7. /getAllUsersWithTickets (tik prisijungusiems vartotojams)
+
+Grąžinti visus vartotojus su agreguotais bought_tickets duomenimis. (naudoti lookup)
+
+8. /getUserByIdWithTickets (tik prisijungusiems vartotojams)
+
+Grąžinti vartotoją pagal id su agreguotais bought_tickets duomenimis. (naudoti lookup)
